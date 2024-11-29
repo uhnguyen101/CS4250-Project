@@ -2,12 +2,26 @@ import asyncio
 import aiohttp
 from urllib.parse import urljoin, urlparse, quote
 from bs4 import BeautifulSoup
-import pymongo
+from pymongo import MongoClient
 
 # MongoDB setup
-client = pymongo.MongoClient("mongodb+srv://nathanzamora45:al7bJQa8WRxkhfxk@cluster0.ubcxi.mongodb.net/")
-db = client["biology_department"]
-faculty_collection = db["faculty_pages"]
+# client = pymongo.MongoClient("mongodb+srv://nathanzamora45:al7bJQa8WRxkhfxk@cluster0.ubcxi.mongodb.net/")
+# db = client["biology_department"]
+# faculty_collection = db["faculty_pages"]
+
+####################################################
+# MongoDB Set-Up
+DB_NAME = 'biology_department'
+DB_HOST = 'localhost'
+DB_PORT = 27017
+try:
+    client = MongoClient(host=DB_HOST, port=DB_PORT)
+    db = client[DB_NAME]
+    # pages = db['pages']
+    faculty_collection = db['faculty_pages']
+except:
+    print('Could not connect to database.')
+####################################################
 
 visited = set()
 
@@ -40,7 +54,7 @@ def is_valid_url(url):
     return bool(parsed.netloc) and bool(parsed.scheme)
 
 def is_target_page(url):
-    return "faculty/lecturers.shtml" in url
+    return "faculty/index.shtml" in url
 
 def extract_and_store_faculty_data(soup, url):
     # Find all individual faculty entries
@@ -75,6 +89,13 @@ def extract_and_store_faculty_data(soup, url):
         if email_link and "mailto:" in email_link['href']:
             email = email_link.text.strip().replace("email address", "").strip()
 
+        web_link = entry.select('a[href^="https://www.cpp.edu/faculty/"]')
+        if web_link:
+            for web in web_link:
+                web = web.get('href')
+        else:
+            web = "No CPP website available."
+
         # Save to MongoDB
         faculty_data = {
             "name": name,
@@ -82,7 +103,7 @@ def extract_and_store_faculty_data(soup, url):
             "email": email,
             "phone": phone,
             "office": office,
-            "url": url
+            "url": web
         }
         faculty_collection.insert_one(faculty_data)
         print(f"Inserted faculty data: {faculty_data}")
@@ -114,5 +135,5 @@ async def crawl(seed_url):
                     frontier.append(absolute_url)
 
 if __name__ == "__main__":
-    seed_url = "https://www.cpp.edu/sci/biological-sciences/faculty/lecturers.shtml"
+    seed_url = "https://www.cpp.edu/sci/biological-sciences/index.shtml"
     asyncio.run(crawl(seed_url))
