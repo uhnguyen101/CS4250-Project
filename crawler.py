@@ -89,6 +89,7 @@ def extract_and_store_faculty_data(soup, url):
         if email_link and "mailto:" in email_link['href']:
             email = email_link.text.strip().replace("email address", "").strip()
 
+        # Extract website, if it is available
         web_link = entry.select('a[href^="https://www.cpp.edu/faculty/"]')
         if web_link:
             for web in web_link:
