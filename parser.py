@@ -1,3 +1,4 @@
+### parser.py ###
 from urllib.parse import urljoin
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
@@ -5,8 +6,7 @@ from bs4 import BeautifulSoup
 from pymongo import MongoClient
 import re
 
-####################################################
-# Create a database connection object using pymongo
+# MongoDB setup
 DB_NAME = "biology_department"
 DB_HOST = "localhost"
 DB_PORT = 27017
@@ -14,10 +14,9 @@ try:
     client = MongoClient(host=DB_HOST, port=DB_PORT)
     db = client[DB_NAME]
     faculty_collection = db["faculty_pages"]
-except:
-    print("Could not connect to database.")
+except Exception as e:
+    print(f"Could not connect to database: {e}")
     exit()
-####################################################
 
 
 def get_content(url):

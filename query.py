@@ -1,3 +1,4 @@
+### query.py ###
 from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -16,9 +17,16 @@ try:
     client = MongoClient(host=DB_HOST, port=DB_PORT)
     db = client[DB_NAME]
     faculty_collection = db["faculty_pages"]
-except:
-    print("Could not connect to database.")
+except Exception as e:
+    print(f"Could not connect to database: {e}")
     exit()
+
+# Domain-specific synonym dictionary
+domain_synonyms = {
+    "genomics": ["genetics", "genomic studies", "gene sequencing"],
+    "microorganisms": ["microbes", "bacteria", "microbial life"],
+    "ecology": ["ecosystem", "environmental biology"],
+}
 
 
 # Preprocess Content
@@ -77,16 +85,20 @@ def expand_query(query, max_synonyms=3):
     """
     expanded_terms = query.split()
     for word in query.split():
-        synonyms = wordnet.synsets(word)
-        added_synonyms = 0
-        for syn in synonyms:
-            for lemma in syn.lemmas():
+        # Add domain-specific synonyms
+        if word in domain_synonyms:
+            expanded_terms.extend(domain_synonyms[word])
+        else:
+            synonyms = wordnet.synsets(word)
+            added_synonyms = 0
+            for syn in synonyms:
+                for lemma in syn.lemmas():
+                    if added_synonyms >= max_synonyms:
+                        break
+                    expanded_terms.append(lemma.name())
+                    added_synonyms += 1
                 if added_synonyms >= max_synonyms:
                     break
-                expanded_terms.append(lemma.name())
-                added_synonyms += 1
-            if added_synonyms >= max_synonyms:
-                break
     return " ".join(set(expanded_terms))
 
 
@@ -99,9 +111,12 @@ def search(query, page=1, per_page=5):
 
     # Expand the query using synonyms
     query = expand_query(query)
+    print(f"Expanded Query: {query}")  # Debug statement to analyze expanded query
 
     # Vectorize content and query
-    vectorizer = TfidfVectorizer(stop_words="english", max_df=0.85, min_df=0.01)
+    vectorizer = TfidfVectorizer(
+        stop_words="english", max_df=0.95, min_df=0.005, ngram_range=(1, 3)
+    )
     tfidf_matrix = vectorizer.fit_transform(content_list)
     query_vec = vectorizer.transform([query])
 
@@ -112,7 +127,16 @@ def search(query, page=1, per_page=5):
     results = sorted(
         zip(names, urls, content_list, similarities), key=lambda x: x[3], reverse=True
     )
-    results = [r for r in results if r[3] > 0.02]  # Filter out low-similarity results
+    results = [
+        r for r in results if r[3] > 0.01
+    ]  # Adjusted threshold to include more relevant results
+
+    # Diversity-based Re-Ranking: Ensure diverse top results
+    unique_faculty = {}
+    for name, url, content, score in results:
+        if name not in unique_faculty:
+            unique_faculty[name] = (name, url, content, score)
+    results = list(unique_faculty.values())
 
     # Paginate results
     start = (page - 1) * per_page
