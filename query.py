@@ -54,28 +54,22 @@ def get_snippet(content, query, max_length=200):
                 break
     return snippet[:max_length].strip()
 
-
-# Load Data
+# Loading Data
 def load_data():
-    """
-    Load indexed content from MongoDB and prepare it for searching.
-    """
     documents = faculty_collection.find({"prof_contents": {"$exists": True}})
     content_list = []
     urls = []
     names = []
-
     for doc in documents:
         name = doc.get("name", "Unknown Faculty")
-        url = doc.get("url", "No URL Available")
-        # Combine all content into a single string
-        all_content = " ".join(doc.get("prof_contents", {}).values())
-        if all_content.strip():  # Skip empty content
-            content_list.append(preprocess_content(all_content))
-            urls.append(url)
-            names.append(name)
-
+        prof_contents = doc.get("prof_contents", {})
+        for url, content in prof_contents.items():
+            if content.strip():
+                content_list.append(preprocess_content(content))
+                urls.append(url.replace("_","."))
+                names.append(name)
     return content_list, urls, names
+
 
 
 # Expand Query Using Synonyms
