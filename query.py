@@ -133,7 +133,7 @@ def search(query, page=1, per_page=5):
     return total_pages
 
 
-# Step 6: Main Function
+# Main Function
 if __name__ == "__main__":
     while True:
         query = input("Enter your search query (or 'exit' to quit): ").strip()
