@@ -59,12 +59,18 @@ def extract_and_store_faculty_data(soup, url):
         name = entry.find('h3', class_='mb-0').text.strip() if entry.find('h3', class_='mb-0') else "N/A"
         title = entry.find('div', class_='mb-1 text-muted').text.strip() if entry.find('div', class_='mb-1 text-muted') else "N/A"
         email = entry.find('a', href=True).text.strip() if entry.find('a', href=True) else "N/A"
+        web_link = entry.select('a[href^="https://www.cpp.edu/faculty/"]')
+        if web_link:
+            for web in web_link:
+                web = web.get('href')
+        else:
+            web = "No CPP website available."
 
         faculty_data = {
             "name": name,
             "title": title,
             "email": email,
-            "url": url
+            "url": web
         }
         faculty_collection.insert_one(faculty_data)
         print(f"Inserted: {faculty_data}")

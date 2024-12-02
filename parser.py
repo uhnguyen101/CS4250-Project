@@ -60,7 +60,7 @@ for url_in_doc in urls:
                         {'url': url},
                         {"$set": {f"prof_contents.{link.replace('.','_')}": content}} 
                     )
-                    # print("Updated result: ", result)
+                    print("Updating content for: ", link)
                 except Exception as e:
                     print(f"Exception {e}")
     except HTTPError as e:
