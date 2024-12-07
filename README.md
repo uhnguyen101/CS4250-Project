@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project is a **Faculty Search Engine** designed to crawl, parse, index, and allow for querying faculty pages from three departments: **Biology**, **Civil Engineering**, and **International Business and Marketing** at a university. The objective is to create an effective tool that gathers faculty information from department websites, indexes key content, and allows users to search for relevant faculty profiles based on specific queries. The search results include a link to the faculty page and a snippet of relevant content.
+This project is a **Faculty Search Engine** designed to crawl, parse, index, and allow for querying faculty pages from Cal Poly Pomona's Biology Department. The objective is to create an effective tool that gathers faculty information from department websites, indexes key content, and allows users to search for relevant faculty profiles based on specific queries. The search results include a link to the faculty page and a snippet of relevant content.
 
 ## Features and Workflow
 
